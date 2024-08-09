@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Canvas Drawing Example</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            /* border-radius: 20px; */
+        }
+        #myCanvas {
+            border: 1px solid black;
+            background-color: white;
+            border-radius: 10px;
+        }
+        #controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .button {
+            margin: 0 5px;
+            padding: 10px 20px;
+            background-color: #da8e23;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 20px;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <center><h1>White Board</h1></center>
+
+<canvas id="myCanvas" width="800" height="450"></canvas>
+<div id="controls">
+    <input type="color" id="colorPicker" value="#000000" class="button">
+    <button class="button" onclick="clearCanvas()">Clear_Canvas</button>
+    <button class="button" onclick="undo()">Undo</button>
+</div>
+
+<script>
+    const canvas = document.getElementById('myCanvas');
+    const ctx = canvas.getContext('2d');
+    let painting = false;
+    let color = document.getElementById('colorPicker').value;
+    let paths = [];
+    let currentPath = [];
+
+    document.getElementById('colorPicker').addEventListener('change', function() {
+        color = this.value;
+    });
+
+    function startPosition(e) {
+        painting = true;
+        currentPath = [];
+        draw(e);
+    }
+
+    function endPosition() {
+        painting = false;
+        ctx.beginPath();
+        if (currentPath.length > 0) {
+            paths.push(currentPath);
+        }
+    }
+
+    function draw(e) {
+        if (!painting) return;
+
+        ctx.lineWidth = 5;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = color;
+
+        const x = e.clientX - canvas.offsetLeft;
+        const y = e.clientY - canvas.offsetTop;
+
+        currentPath.push({ x, y, color });
+
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+    }
+
+    function clearCanvas() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        paths = [];
+    }
+
+    function undo() {
+        if (paths.length > 0) {
+            paths.pop();
+            redraw();
+        }
+    }
+
+    function redraw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        paths.forEach(path => {
+            ctx.beginPath();
+            for (let i = 0; i < path.length; i++) {
+                ctx.lineWidth = 5;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = path[i].color;
+
+                if (i === 0) {
+                    ctx.moveTo(path[i].x, path[i].y);
+                } else {
+                    ctx.lineTo(path[i].x, path[i].y);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(path[i].x, path[i].y);
+                }
+            }
+            ctx.beginPath();
+        });
+    }
+
+    canvas.addEventListener('mousedown', startPosition);
+    canvas.addEventListener('mouseup', endPosition);
+    canvas.addEventListener('mousemove', draw);
+</script>
+
+</body>
+</html>
